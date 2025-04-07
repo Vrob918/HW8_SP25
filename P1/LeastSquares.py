@@ -52,27 +52,23 @@ class LeastSquaresFit_Class():
         Get output of coefficients as a formatted string.
         :return: a formatted string of the coefficients that is comma delimited.
         """
-        s=''
-        n=0
-        for c in self.coeffs:
-            s += ('' if n == 0 else ', ')+"{:0.4f}".format(c)
-            n += 1
+        s = ''
+        # Reverse the order to get descending order (highest power first)
+        for n, c in enumerate(self.coeffs[::-1]):
+            s += ('' if n == 0 else ', ') + "{:0.4f}".format(c)
         return s
 
     def GetPlotInfo(self, power, npoints=500):
         Xmin = min(self.x)
         Xmax = max(self.x)
-        Ymin = min(self.y)
-        Ymax = max(self.y)
-        dX = 1.0 * (Xmax - Xmin) / npoints
+        dX = (Xmax - Xmin) / npoints
 
         a = self.LeastSquares(power)
-
         xvals = []
         yvals = []
         for i in range(npoints):
             xvals.append(Xmin + i * dX)
             yvals.append(self.Poly(xvals[i], a))
         RSq = self.RSquared(a)
-        return xvals,yvals,RSq
+        return xvals, yvals, RSq
 #endregion

@@ -1,3 +1,4 @@
+#utilized ChatGPT
 #region imorts
 import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -44,11 +45,10 @@ class Pump_Controller():
         :param data: 
         :return: 
         """
-        self.Model.PumpName = #JES Missing Code
-        #data[1] is the units line
-        L=data[2].split()
-        self.Model.FlowUnits = #JES Missing Code
-        self.Model.HeadUnits = #JES Missing Code
+        self.Model.PumpName = data[0].strip()  # The first line contains the pump name
+        L = data[2].split()  # Splits the units line into tokens
+        self.Model.FlowUnits = L[0]  # First token for Flow Units (e.g., "gpm")
+        self.Model.HeadUnits = L[1]  # Second token for Head Units (e.g., "ft")
 
         # extracts flow, head and efficiency data and calculates coefficients
         self.SetData(data[3:])
@@ -68,10 +68,10 @@ class Pump_Controller():
 
         #parse new data
         for L in data:
-            Cells=#JES Missing Code #parse the line into an array of strings
-            self.Model.FlowData=np.append(self.Model.FlowData, #JES Missing Code) #remove any spaces and convert string to a float
-            self.Model.HeadData=np.append(self.Model.HeadData, #JES Missing Code) #remove any spaces and convert string to a float
-            self.Model.EffData=np.append(self.Model.EffData, #JES Missing Code) #remove any spaces and convert string to a float
+            Cells = L.split()  # Splits the line on whitespace
+            self.Model.FlowData = np.append(self.Model.FlowData, float(Cells[0]))
+            self.Model.HeadData = np.append(self.Model.HeadData, float(Cells[1]))
+            self.Model.EffData = np.append(self.Model.EffData, float(Cells[2]))
 
         #call least square fit for head and efficiency
         self.LSFit()
@@ -130,7 +130,31 @@ class Pump_View():
         effx, effy, effRSq = Model.LSFitEff.GetPlotInfo(3, npoints=500)
 
         axes = self.ax
-        #JES Missing code (many lines to make the graph)
+        axes.clear()
+        ax2 = axes.twinx()
+
+        # Plot the raw data points with unfilled markers:
+        # Head: unfilled circle (black)
+        axes.plot(Model.FlowData, Model.HeadData, 'ko', markerfacecolor='none', label="Head Data")
+        # Efficiency: unfilled upward triangle (black)
+        ax2.plot(Model.FlowData, Model.EffData, 'k^', markerfacecolor='none', label="Efficiency Data")
+
+        # Plot the fitted curves with desired line styles:
+        # Head fit: black dashed line
+        axes.plot(headx, heady, 'k--', label=f"Head Fit (R²={headRSq:.4f})")
+        # Efficiency fit: black dotted line
+        ax2.plot(effx, effy, 'k:', label=f"Efficiency Fit (R²={effRSq:.4f})")
+
+        # Set axis labels and title:
+        axes.set_xlabel("Flow (" + Model.FlowUnits + ")")
+        axes.set_ylabel("Head (" + Model.HeadUnits + ")")
+        ax2.set_ylabel("Efficiency (%)")
+        axes.set_title("Pump Performance Curve")
+
+        # Combine legends from both axes:
+        lines1, labels1 = axes.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        axes.legend(lines1 + lines2, labels1 + labels2, loc='best')
 
         self.canvas.draw()
 

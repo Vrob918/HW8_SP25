@@ -1,3 +1,4 @@
+#utilized ChatGPT
 #region imports
 import sys
 from PyQt5 import QtWidgets as qtw
@@ -95,7 +96,7 @@ class MainWindow(qtw.QWidget, Ui_Form):
         self.RC.updatePlot()
 
     def SetUnits(self):
-        #JES Missing Code
+        self.RC.updateUnits()
         pass
 
     def setNewPHigh(self):

@@ -1,3 +1,4 @@
+#utilized ChatGPT
 #region imports
 import numpy as np
 import PyQt5.QtWidgets as qtw
@@ -71,7 +72,7 @@ class PumpCurve_GUI_Class(Ui_Form, qtw.QWidget):  #class for PumpCurve_GUI inher
         return True
         :return: boolean for if the operation was successful.
         '''
-        fname=#JES Missing Code # use qtw.QFileDialog.getOpenFileName
+        fname=qtw.QFileDialog.getOpenFileName(self, "Select Pump Data File", self.FilePath, "Text Files (*.txt);;All Files (*)")
         oTF=len(fname[0])>0
         if oTF:
             self.FileName=fname[0]

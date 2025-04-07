@@ -1,3 +1,4 @@
+#utilized ChatGPT
 #region imports
 import math
 from Calc_state import *
@@ -68,13 +69,17 @@ class rankineView():
         SI = self.rb_SI.isChecked()
         if self.rdo_Quality.isChecked():
             self.le_TurbineInletCondition.setText("1.0")
-            self.le_TurbineInletCondition.setEnabled(False)
+            self.le_TurbineInletCondition.setEnabled(True)
+            self.lbl_TurbineInletCondition.setText("Turbine Inlet: x =")
         else:
-            pass
-            #JES Missing Code
-            #step 1: get saturated properties at PHigh
-            #step 2: convert the saturation temperature to proper units
-            #step 3:  update the text in the le_TurbineInletCondition widget
+            satPropsHigh = Model.steam.getsatProps_p(Model.p_high)
+            tsat = satPropsHigh.tsat
+            if not SI:
+                tsat = UC.C_to_F(tsat)
+            self.le_TurbineInletCondition.setText("{:.2f}".format(tsat))
+            self.le_TurbineInletCondition.setEnabled(True)
+            tempUnit = "(C)" if Model.SI else "(F)"
+            self.lbl_TurbineInletCondition.setText("Turbine Inlet: THigh " + tempUnit + " =")
 
         # endregion
         x = self.rdo_Quality.isChecked()
@@ -89,11 +94,39 @@ class rankineView():
                  finally, we need to call the function self.SelectQualityOrTHigh()
                  :return:
                  """
-        #JES Missing Code
+        try:
+            p_input = float(self.le_PHigh.text())
+            # Convert to bar if necessary
+            if not Model.SI:
+                p_high = p_input * UC.psi_to_bar
+            else:
+                p_high = p_input
+            Model.p_high = p_high
+            # Update saturation properties for high pressure
+            satPropsHigh = Model.steam.getsatProps_p(p_high)
+            self.lbl_SatPropHigh.setText(satPropsHigh.getTextOutput(SI=Model.SI))
+            # If THigh mode is active, update turbine inlet condition
+            if not self.rdo_Quality.isChecked():
+                tsat = satPropsHigh.tsat
+                if not Model.SI:
+                    tsat = UC.C_to_F(tsat)
+                self.le_TurbineInletCondition.setText("{:.2f}".format(tsat))
+        except Exception as e:
+            self.lbl_SatPropHigh.setText("Invalid P High")
         pass
 
     def setNewPLow(self, Model=None):
-        #JES Missing Code
+        try:
+            p_input = float(self.le_PLow.text())
+            if not Model.SI:
+                p_low = p_input * UC.psi_to_bar
+            else:
+                p_low = p_input
+            Model.p_low = p_low
+            satPropsLow = Model.steam.getsatProps_p(p_low)
+            self.lbl_SatPropLow.setText(satPropsLow.getTextOutput(SI=Model.SI))
+        except Exception as e:
+            self.lbl_SatPropLow.setText("Invalid P Low")
         pass
 
     def outputToGUI(self, Model=None):
@@ -129,16 +162,38 @@ class rankineView():
         # Update units displayed on labels
 
         #Step 1. Update pressures for PHigh and PLow
-        pCF=1 if Model.SI else UC.bar_to_psi
-        #JES Missing Code
+        pCF = 1 if Model.SI else UC.bar_to_psi
+        self.le_PHigh.setText("{:.2f}".format(Model.p_high * pCF))
+        self.le_PLow.setText("{:.2f}".format(Model.p_low * pCF))
 
         #Step 2. Update THigh if it is not None
         if not self.rdo_Quality.isChecked():
-            #JES Missing Code
+            satPropsHigh = Model.steam.getsatProps_p(Model.p_high)
+            tsat = satPropsHigh.tsat
+            if not Model.SI:
+                tsat = UC.C_to_F(tsat)
+            self.le_TurbineInletCondition.setText("{:.2f}".format(tsat))
+        if self.rdo_Quality.isChecked():
+            self.lbl_TurbineInletCondition.setText("Turbine Inlet: x =")
             pass
 
         #Step 3. Update the units for labels
-        #JES Missing Code
+        else:
+            tempUnit = "(C)" if Model.SI else "(F)"
+            self.lbl_TurbineInletCondition.setText("Turbine Inlet: THigh " + tempUnit + " =")
+        pressure_units = "bar" if Model.SI else "psi"
+        self.lbl_PHigh.setText("P High (" + pressure_units + ") =")
+        self.lbl_PLow.setText("P Low (" + pressure_units + ") =")
+        enthalpy_units = "kJ/kg" if Model.SI else "BTU/lb"
+        self.lbl_H1Units.setText(enthalpy_units)
+        self.lbl_H2Units.setText(enthalpy_units)
+        self.lbl_H3Units.setText(enthalpy_units)
+        self.lbl_H4Units.setText(enthalpy_units)
+        self.lbl_TurbineWorkUnits.setText(enthalpy_units)
+        self.lbl_PumpWorkUnits.setText(enthalpy_units)
+        self.lbl_HeatAddedUnits.setText(enthalpy_units)
+        self.plot_cycle_XY(Model=Model)
+        self.canvas.draw()
         pass
 
     def print_summary(self, Model=None):
